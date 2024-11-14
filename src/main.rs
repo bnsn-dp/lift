@@ -13,19 +13,19 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    /// Prints the file
+    /// Searches the file at the provided path for a provided pattern
     #[command(arg_required_else_help = true)]
     Scan {
         pattern: String,
         path: PathBuf,
     },
-    /// tracks a straight set
+    /// tracks straight sets, where you perform a number of fixed repetitions for a fixed number of sets
     Set(SetArgs),
-    /// tracks a one-rep max
+    /// tracks a one-rep max, where you lift the maximum amount of weight you safely can
     Max(MaxArgs),
-    /// tracks a myrorep match set
+    /// tracks myrorep match sets, where you do as many rest-pauses as necessary to reach a target rep number
     Myo(MyoArgs),
-    /// tracks a down set
+    /// tracks a down set, where you perform a number of repetitions and decrement by 1 for every subsequent set
     Down(DownArgs),
 }
 
@@ -33,11 +33,17 @@ enum Commands {
 #[command(args_conflicts_with_subcommands = true)]
 #[command(flatten_help = true)]
 struct SetArgs {
+    /// the name of the exercise you performed
     exercise: String,
+    /// the number of sets you performed
     sets: u8,
+    /// the amount of repetitions you performed each set
     reps: u8,
+    /// the amount of weight you lifted
     weight: u8,
+    /// the reps in reserve, the number of additional reps you could have done
     rir: u8,
+    /// the path to the file where you want the log recorded
     path: PathBuf,
 }
 
@@ -45,8 +51,11 @@ struct SetArgs {
 #[command(args_conflicts_with_subcommands = true)]
 #[command(flatten_help = true)]
 struct MaxArgs {
+    /// the name of the exercise you performed
     exercise: String,
+    /// the amount of weight you lifted
     weight:u8,
+    /// the path to the file where you want the log recorded
     path: PathBuf
 }
 
@@ -54,11 +63,17 @@ struct MaxArgs {
 #[command(args_conflicts_with_subcommands = true)]
 #[command(flatten_help = true)]
 struct MyoArgs {
+    /// the name of the exercise you performed
     exercise: String,
+    /// the number of sets you performed
     sets: u8,
+    /// the target reps that you accumulated each set
     reps: u8,
+    /// the average number of rest-pauses you took each set
     rests: u8,
+    /// the amount of weight you lifted
     weight: u8,
+    /// the path to the file where you want the log recorded
     path: PathBuf
 }
 
@@ -67,9 +82,13 @@ struct MyoArgs {
 #[command(args_conflicts_with_subcommands = true)]
 #[command(flatten_help = true)]
 struct DownArgs {
+    /// the name of the exercise you performed
     exercise: String,
+    /// the amount of reps you started with and the amount of sets you performed
     starting_reps: u16,
+    /// the weight you lifted
     weight: u8,
+    /// the path to the file where you want the log recorded
     path: PathBuf
 }
 
