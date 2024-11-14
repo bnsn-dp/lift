@@ -15,7 +15,7 @@ struct Cli {
 enum Commands {
     /// Prints the file
     #[command(arg_required_else_help = true)]
-    Review {
+    Scan {
         pattern: String,
         path: PathBuf,
     },
@@ -55,7 +55,8 @@ struct MaxArgs {
 #[command(flatten_help = true)]
 struct MyoArgs {
     exercise: String,
-    rep_target: u8,
+    sets: u8,
+    reps: u8,
     rests: u8,
     weight: u8,
     path: PathBuf
@@ -95,7 +96,7 @@ fn main() {
     let args = Cli::parse();
 
     match args.command {
-        Commands::Review { pattern, path } => {
+        Commands::Scan { pattern, path } => {
             let contents = std::fs::read_to_string(&path).expect("Could not read file");
             for line in contents.lines() {
                 if line.contains(&pattern) {
@@ -104,40 +105,40 @@ fn main() {
             }
         },
         Commands::Set(set_args) => {
-            println!("logging '#set {}: {}x{} at {}lbs ({} RIR)'", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir);
+            println!("logging '#set {}: {}x{} [{}lbs] ({} RIR)'", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir);
             valid_date(&set_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&set_args.path)
                 .expect("could not open file");
-            writeln!(file, "    #set {}: {}x{} at {} lbs ({} RIR)", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir).expect("write failed");
+            writeln!(file, "    #set {}: {}x{} [{}lbs] ({} RIR)", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir).expect("write failed");
         },
         Commands::Max(max_args) => {
-            println!("logging '#max {}: {} lbs'", max_args.exercise, max_args.weight);
+            println!("logging '#max {}: [{}lbs]'", max_args.exercise, max_args.weight);
             valid_date(&max_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&max_args.path)
                 .expect("could not open file");
-            writeln!(file, "    #max {}: {} lbs", max_args.exercise, max_args.weight).expect("write failed");
+            writeln!(file, "    #max {}: [{}lbs]", max_args.exercise, max_args.weight).expect("write failed");
         },
         Commands::Myo(myo_args) => {
-            println!("logging '#myo {}: {} reps ({} rests) at {} lbs'", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight);
+            println!("logging '#myo {}: {}x{} ({} rests) [{} lbs]'", myo_args.exercise, myo_args.sets, myo_args.reps, myo_args.rests, myo_args.weight);
             valid_date(&myo_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&myo_args.path)
                 .expect("could not open file");
-            writeln!(file, "    #myp {}: {} reps ({} rests) at {} lbs", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight).expect("write failed");
+            writeln!(file, "    #myo {}: {}x{} ({} rests) [{}lbs]", myo_args.exercise, myo_args.sets, myo_args.reps, myo_args.rests, myo_args.weight).expect("write failed");
         },
         Commands::Down(down_args) => {
-            println!("logging '#down {}: {} total reps over {} total sets at {} lbs'", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight);
+            println!("logging '#down {}: {} => {} [{}lbs]'", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight);
             valid_date(&down_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&down_args.path)
                 .expect("could not open file");
-            writeln!(file, "    #down {}: {} total reps over {} total sets at {} lbs", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight).expect("write failed");
+            writeln!(file, "    #down {}: {} => {} [{}lbs]", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight).expect("write failed");
         },
     }
 }
