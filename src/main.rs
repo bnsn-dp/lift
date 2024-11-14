@@ -1,0 +1,119 @@
+use clap::{Args, Parser, Subcommand};
+use std::{io::Write, path::PathBuf};
+
+/// A fictional versioning CLI
+#[derive(Debug, Parser)] // requires `derive` feature
+#[command(name = "lift")]
+#[command(about = "A plain text workout log that saves to human-readable .md", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+enum Commands {
+    /// Prints the file
+    #[command(arg_required_else_help = true)]
+    Review {
+        pattern: String,
+        path: PathBuf,
+    },
+    /// tracks a straight set
+    Set(SetArgs),
+    /// tracks a one-rep max
+    Max(MaxArgs),
+    /// tracks a myrorep match set
+    Myo(MyoArgs),
+    /// tracks a down set
+    Down(DownArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(args_conflicts_with_subcommands = true)]
+#[command(flatten_help = true)]
+struct SetArgs {
+    exercise: String,
+    sets: u8,
+    reps: u8,
+    weight: u8,
+    rir: u8,
+    path: PathBuf,
+}
+
+#[derive(Debug, Args)]
+#[command(args_conflicts_with_subcommands = true)]
+#[command(flatten_help = true)]
+struct MaxArgs {
+    exercise: String,
+    weight:u8,
+    path: PathBuf
+}
+
+#[derive(Debug, Args)]
+#[command(args_conflicts_with_subcommands = true)]
+#[command(flatten_help = true)]
+struct MyoArgs {
+    exercise: String,
+    rep_target: u8,
+    rests: u8,
+    weight: u8,
+    path: PathBuf
+}
+
+
+#[derive(Debug, Args)]
+#[command(args_conflicts_with_subcommands = true)]
+#[command(flatten_help = true)]
+struct DownArgs {
+    exercise: String,
+    starting_reps: u16,
+    weight: u8,
+    path: PathBuf
+}
+
+fn main() {
+    let args = Cli::parse();
+
+    match args.command {
+        Commands::Review { pattern, path } => {
+            let contents = std::fs::read_to_string(&path).expect("Could not read file");
+            for line in contents.lines() {
+                if line.contains(&pattern) {
+                    println!("{}", line);
+                }
+            }
+        },
+        Commands::Set(set_args) => {
+            println!("logging '#set {}: {}x{} at {}lbs ({} RIR)'", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir);
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&set_args.path)
+                .expect("could not open file");
+            writeln!(file, "#set {}: {}x{} at {} lbs ({} RIR)", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir).expect("write failed");
+        },
+        Commands::Max(max_args) => {
+            println!("logging '#max {}: {} lbs'", max_args.exercise, max_args.weight);
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&max_args.path)
+                .expect("could not open file");
+            writeln!(file, "#max {}: {} lbs", max_args.exercise, max_args.weight).expect("write failed");
+        },
+        Commands::Myo(myo_args) => {
+            println!("logging '#myo {}: {} reps ({} rests) at {} lbs'", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight);
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&myo_args.path)
+                .expect("could not open file");
+            writeln!(file, "#myp {}: {} reps ({} rests) at {} lbs", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight).expect("write failed");
+        },
+        Commands::Down(down_args) => {
+            println!("logging '#down {}: {} total reps over {} total sets at {} lbs'", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight);
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(&down_args.path)
+                .expect("could not open file");
+            writeln!(file, "#down {}: {} total reps over {} total sets at {} lbs", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight).expect("write failed");
+        },
+    }
+}
