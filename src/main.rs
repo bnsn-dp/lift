@@ -1,5 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 use std::{io::Write, path::PathBuf};
+use chrono::Local;
 
 /// A fictional versioning CLI
 #[derive(Debug, Parser)] // requires `derive` feature
@@ -71,6 +72,25 @@ struct DownArgs {
     path: PathBuf
 }
 
+fn valid_date(path: &PathBuf){
+    let mut today = false;
+    let date = Local::now().format("%Y-%m-%d").to_string();
+    let contents = std::fs::read_to_string(path).expect("Could not read file");
+    for line in contents.lines() {
+        if line.contains(&date) {
+            today = true;
+        }
+    }
+    if !today {
+        let mut file = std::fs::OpenOptions::new()
+            .append(true)
+            .open(path)
+            .expect("Could not open file");
+        writeln!(file, "{}", date).expect("Write failed");
+    }
+}
+
+
 fn main() {
     let args = Cli::parse();
 
@@ -85,35 +105,39 @@ fn main() {
         },
         Commands::Set(set_args) => {
             println!("logging '#set {}: {}x{} at {}lbs ({} RIR)'", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir);
+            valid_date(&set_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&set_args.path)
                 .expect("could not open file");
-            writeln!(file, "#set {}: {}x{} at {} lbs ({} RIR)", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir).expect("write failed");
+            writeln!(file, "    #set {}: {}x{} at {} lbs ({} RIR)", set_args.exercise, set_args.sets, set_args.reps, set_args.weight, set_args.rir).expect("write failed");
         },
         Commands::Max(max_args) => {
             println!("logging '#max {}: {} lbs'", max_args.exercise, max_args.weight);
+            valid_date(&max_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&max_args.path)
                 .expect("could not open file");
-            writeln!(file, "#max {}: {} lbs", max_args.exercise, max_args.weight).expect("write failed");
+            writeln!(file, "    #max {}: {} lbs", max_args.exercise, max_args.weight).expect("write failed");
         },
         Commands::Myo(myo_args) => {
             println!("logging '#myo {}: {} reps ({} rests) at {} lbs'", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight);
+            valid_date(&myo_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&myo_args.path)
                 .expect("could not open file");
-            writeln!(file, "#myp {}: {} reps ({} rests) at {} lbs", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight).expect("write failed");
+            writeln!(file, "    #myp {}: {} reps ({} rests) at {} lbs", myo_args.exercise, myo_args.rep_target, myo_args.rests, myo_args.weight).expect("write failed");
         },
         Commands::Down(down_args) => {
             println!("logging '#down {}: {} total reps over {} total sets at {} lbs'", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight);
+            valid_date(&down_args.path);
             let mut file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(&down_args.path)
                 .expect("could not open file");
-            writeln!(file, "#down {}: {} total reps over {} total sets at {} lbs", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight).expect("write failed");
+            writeln!(file, "    #down {}: {} total reps over {} total sets at {} lbs", down_args.exercise, (down_args.starting_reps * (down_args.starting_reps+1))/2, down_args.starting_reps, down_args.weight).expect("write failed");
         },
     }
 }
